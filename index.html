@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="NeuralStudy — Next-Generation AI-Powered Learning Platform for Indian Students">
+<meta name="theme-color" content="#050510">
+<title>NeuralStudy — AI-Powered Learning Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-logo">⚡ NEURAL STUDY</div>
+  <div class="load-tagline">AI-POWERED LEARNING PLATFORM</div>
+  <div class="load-bar-wrap"><div class="load-bar"></div></div>
+  <div class="load-text" id="loadText">INITIALIZING AI SYSTEMS...</div>
+</div>
+
+<!-- AUTH -->
+<div id="auth-page">
+  <div class="auth-bg"></div>
+  <div class="auth-card">
+    <div class="auth-logo">⚡ NEURAL STUDY</div>
+    <div class="auth-subtitle">Next-Generation AI Learning Platform</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="login-email" type="email" placeholder="student@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">LOGIN →</button>
+      <p class="auth-hint">Demo: any email + 6+ character password</p>
+    </div>
+    <div id="register-form" class="hidden">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="reg-name" type="text" placeholder="Your Name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="reg-email" type="email" placeholder="student@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="reg-pass" type="password" placeholder="Create password (6+ chars)" onkeydown="if(event.key==='Enter') doRegister()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Board</label>
+        <select class="form-input" id="reg-board">
+          <option>CBSE</option><option>ICSE</option><option>State Board</option><option>IB</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Class</label>
+        <select class="form-input" id="reg-class">
+          <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+          <option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="doRegister()">CREATE ACCOUNT →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="topbar">
+    <div class="top-logo">⚡ NEURAL STUDY</div>
+    <div class="theme-btns">
+      <button class="theme-btn active" onclick="setTheme('cyber')" id="tbtn-cyber">⚡ Tokyo</button>
+      <button class="theme-btn" onclick="setTheme('dark')" id="tbtn-dark">🌑 Dark</button>
+      <button class="theme-btn" onclick="setTheme('light')" id="tbtn-light">☀️ Light</button>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar" id="userInitial">?</div>
+      <span id="userName">Student</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </header>
+
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')" data-page="dashboard"><span class="tab-icon">🏠</span> Dashboard</button>
+    <button class="nav-tab" onclick="showPage('doubt')" data-page="doubt"><span class="tab-icon">🧠</span> Doubt Engine</button>
+    <button class="nav-tab" onclick="showPage('dictation')" data-page="dictation"><span class="tab-icon">🎙️</span> Dictation</button>
+    <button class="nav-tab" onclick="showPage('papers')" data-page="papers"><span class="tab-icon">📄</span> Question Papers</button>
+    <button class="nav-tab" onclick="showPage('speech')" data-page="speech"><span class="tab-icon">🔊</span> Speech Tutor</button>
+    <button class="nav-tab" onclick="showPage('analytics')" data-page="analytics"><span class="tab-icon">📊</span> Analytics</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="section-header">
+        <div class="section-title">WELCOME BACK, <span id="dashName">STUDENT</span> 🎓</div>
+        <div class="section-desc">Your AI-powered learning journey continues. Let's crush it today!</div>
+      </div>
+      <div class="dashboard-grid">
+        <div class="stat-card" onclick="showPage('doubt')">
+          <div class="stat-icon">💬</div><div class="stat-label">Doubts Resolved</div>
+          <div class="stat-value" id="stat-doubts">0</div>
+        </div>
+        <div class="stat-card" onclick="showPage('papers')">
+          <div class="stat-icon">📑</div><div class="stat-label">Papers Generated</div>
+          <div class="stat-value" id="stat-papers">0</div>
+        </div>
+        <div class="stat-card" onclick="showPage('dictation')">
+          <div class="stat-icon">🎯</div><div class="stat-label">Avg Accuracy</div>
+          <div class="stat-value" id="stat-accuracy">—</div>
+        </div>
+        <div class="stat-card" onclick="showPage('analytics')">
+          <div class="stat-icon">🔥</div><div class="stat-label">Study Streak</div>
+          <div class="stat-value" id="stat-streak">1 day</div>
+        </div>
+      </div>
+      <div class="quick-modules">
+        <div class="module-card" onclick="showPage('doubt')">
+          <div class="module-icon">🧠</div>
+          <div class="module-title">ULTRA REASONING ENGINE</div>
+          <div class="module-desc">Multi-step AI tutor with board alignment, adaptive difficulty, and long-term memory.</div>
+          <span class="module-badge">ALL BOARDS SUPPORTED</span>
+        </div>
+        <div class="module-card" onclick="showPage('dictation')">
+          <div class="module-icon">🎙️</div>
+          <div class="module-title">INTELLIGENT DICTATION</div>
+          <div class="module-desc">Upload notes, AI reads aloud, you type what you hear — smart semantic evaluation.</div>
+          <span class="module-badge">AI SEMANTIC SCORING</span>
+        </div>
+        <div class="module-card" onclick="showPage('papers')">
+          <div class="module-icon">📝</div>
+          <div class="module-title">PAPER GENERATOR</div>
+          <div class="module-desc">Generate real exam-style papers aligned with CBSE, ICSE, State Board patterns.</div>
+          <span class="module-badge">EXPORT & DOWNLOAD</span>
+        </div>
+        <div class="module-card" onclick="showPage('speech')">
+          <div class="module-icon">🎤</div>
+          <div class="module-title">SPEECH AI TUTOR</div>
+          <div class="module-desc">Live voice conversation with AI tutor. Speak your doubt, get verbal and visual responses.</div>
+          <span class="module-badge">REAL-TIME VOICE</span>
+        </div>
+      </div>
+      <div class="section-divider"></div>
+      <div class="motivation-card">
+        <div class="motivation-label">💡 AI DAILY MOTIVATION</div>
+        <div id="motivationMsg" class="motivation-text">"Success is not about how much you study, but how smartly you study."</div>
+      </div>
+    </div>
+
+    <!-- DOUBT ENGINE -->
+    <div class="page" id="page-doubt">
+      <div class="section-header">
+        <div class="section-title">🧠 ULTRA REASONING ENGINE</div>
+        <div class="section-desc">Ask anything. Get structured, board-aligned, multi-step AI explanations.</div>
+      </div>
+      <div class="board-selector">
+        <select class="board-select" id="board-select">
+          <option>CBSE</option><option>ICSE</option><option>State Board</option><option>IB</option>
+        </select>
+        <select class="class-select" id="class-select">
+          <option>Class 6</option><option>Class 7</option><option>Class 8</option>
+          <option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option>
+        </select>
+        <select class="class-select" id="subject-select">
+          <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+          <option>Biology</option><option>English</option><option>History</option>
+          <option>Geography</option><option>Economics</option><option>Computer Science</option>
+        </select>
+        <button class="tts-btn" onclick="clearDoubtChat()">🗑️ Clear</button>
+      </div>
+      <div class="chat-window" id="doubt-chat">
+        <div class="msg ai">
+          <div class="msg-avatar">🧠</div>
+          <div class="msg-bubble">
+            👋 <strong>Hello! I'm your Neural AI Tutor.</strong><br><br>
+            Select your Board, Class &amp; Subject above, then ask me anything!
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <button class="voice-btn" id="voice-doubt-btn" onclick="toggleVoiceInput()" title="Voice Input">🎤</button>
+        <textarea class="chat-input" id="doubt-input"
+          placeholder="Type your doubt... e.g. 'Explain Newton's 3rd law with examples'" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDoubt();}"></textarea>
+        <button class="send-btn" onclick="sendDoubt()" id="doubt-send-btn">SEND ▶</button>
+      </div>
+    </div>
+
+    <!-- DICTATION -->
+    <div class="page" id="page-dictation">
+      <div class="section-header">
+        <div class="section-title">🎙️ INTELLIGENT DICTATION SYSTEM</div>
+        <div class="section-desc">Upload notes → AI reads aloud → You type → Get smart semantic feedback.</div>
+      </div>
+      <div class="upload-area" id="dict-upload" onclick="document.getElementById('dict-file').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDictDrop(event)">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text"><strong>Click or drag</strong> to upload a .txt file<br><span style="font-size:0.8rem;opacity:0.6">or paste content directly below</span></div>
+        <input type="file" id="dict-file" accept=".txt,.md" hidden onchange="handleDictFile(event)">
+      </div>
+      <div class="tts-controls">
+        <div class="tts-section-label">📖 CONTENT TO READ</div>
+        <textarea class="dictation-area" id="tts-text" placeholder="Paste or type content to be read aloud..." rows="5"></textarea>
+        <div class="tts-bar">
+          <span class="speed-label-text">Speed:</span>
+          <input type="range" class="speed-range" id="tts-speed" min="0.5" max="2" step="0.1" value="1">
+          <span id="speed-label" class="speed-value">1x</span>
+          <button class="tts-btn active" id="tts-play-btn" onclick="toggleTTS()">▶ Play</button>
+          <button class="tts-btn" onclick="stopTTS()">⏹ Stop</button>
+        </div>
+      </div>
+      <div class="tts-section-label" style="margin-bottom:8px">✍️ YOUR DICTATION</div>
+      <textarea class="dictation-area" id="user-dictation" placeholder="Listen carefully and type what you heard here..." rows="5"></textarea>
+      <button class="btn-primary" style="max-width:220px;margin-top:12px" onclick="analyzeDictation()" id="analyze-btn">ANALYZE ACCURACY 🔍</button>
+      <div class="feedback-card hidden" id="dict-feedback">
+        <div class="feedback-title">📊 DICTATION ANALYSIS</div>
+        <div class="accuracy-bar"><div class="accuracy-fill" id="acc-fill" style="width:0%"></div></div>
+        <div id="acc-score" class="acc-score-text"></div>
+        <div id="dict-feedback-text" class="feedback-body"></div>
+      </div>
+    </div>
+
+    <!-- QUESTION PAPERS -->
+    <div class="page" id="page-papers">
+      <div class="section-header">
+        <div class="section-title">📄 DYNAMIC QUESTION PAPER GENERATOR</div>
+        <div class="section-desc">AI-generated real exam-style papers aligned to your board, class, and chapter.</div>
+      </div>
+      <div class="paper-form">
+        <div class="form-group"><label class="form-label">Board</label>
+          <select class="form-input" id="paper-board"><option>CBSE</option><option>ICSE</option><option>State Board</option><option>IB</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Class</label>
+          <select class="form-input" id="paper-class"><option>Class 6</option><option>Class 7</option><option>Class 8</option><option>Class 9</option><option>Class 10</option><option>Class 11</option><option>Class 12</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Subject</label>
+          <select class="form-input" id="paper-subject"><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>English</option><option>History</option><option>Geography</option><option>Economics</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Chapter / Topic</label>
+          <input class="form-input" id="paper-chapter" placeholder="e.g., Trigonometry, Photosynthesis">
+        </div>
+        <div class="form-group"><label class="form-label">Difficulty</label>
+          <select class="form-input" id="paper-difficulty"><option>Easy</option><option selected>Medium</option><option>Hard</option><option>Mixed</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Total Marks</label>
+          <select class="form-input" id="paper-marks"><option>25</option><option>40</option><option selected>60</option><option>80</option><option>100</option></select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Special Instructions (optional)</label>
+        <input class="form-input" id="paper-instructions" placeholder="e.g., Include numericals, Focus on formulas">
+      </div>
+      <button class="btn-primary" style="max-width:240px;margin-bottom:20px" onclick="generatePaper()" id="gen-paper-btn">GENERATE PAPER ⚡</button>
+      <div class="paper-output hidden" id="paper-output"></div>
+      <div class="action-bar hidden" id="paper-actions">
+        <button class="btn-secondary" onclick="downloadPaper()">⬇️ Download</button>
+        <button class="btn-secondary" onclick="generateAnswerKey()">🔑 Answer Key</button>
+        <button class="btn-secondary" onclick="copyPaper()">📋 Copy Text</button>
+      </div>
+      <div style="margin-top:28px">
+        <div class="tts-section-label" style="margin-bottom:12px">📚 PAPER HISTORY</div>
+        <div id="paper-history"></div>
+      </div>
+    </div>
+
+    <!-- SPEECH TUTOR -->
+    <div class="page" id="page-speech">
+      <div class="section-header">
+        <div class="section-title">🎤 REAL-TIME SPEECH AI TUTOR</div>
+        <div class="section-desc">Speak your doubt, get AI verbal + visual response. Like a private human tutor.</div>
+      </div>
+      <div class="speech-interface">
+        <div class="mic-orb" id="mic-orb" onclick="toggleSpeechTutor()">🎤</div>
+        <div class="speech-status" id="speech-status">Tap the microphone to speak your doubt</div>
+        <div class="chat-window speech-chat-box" id="speech-chat">
+          <div class="msg ai">
+            <div class="msg-avatar">🎤</div>
+            <div class="msg-bubble"><strong>Hello! I'm your Speech AI Tutor.</strong><br>Tap the mic and speak your question!</div>
+          </div>
+        </div>
+        <div class="speech-text-row">
+          <input class="chat-input" id="speech-text-input" placeholder="Or type your question here..." onkeydown="if(event.key==='Enter') sendSpeechText()">
+          <button class="send-btn" onclick="sendSpeechText()">SEND ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="section-header">
+        <div class="section-title">📊 LEARNING ANALYTICS</div>
+        <div class="section-desc">Track progress, spot weak areas, and stay on your revision schedule.</div>
+      </div>
+      <div class="analytics-grid">
+        <div class="analytics-card"><div class="analytics-title">📈 Subject Performance</div><div id="subject-analytics"></div></div>
+        <div class="analytics-card"><div class="analytics-title">📅 Activity Calendar</div><div class="calendar-grid" id="cal-grid"></div></div>
+        <div class="analytics-card"><div class="analytics-title">⚠️ Weak Topics Detected</div><div id="weak-topics"></div></div>
+        <div class="analytics-card"><div class="analytics-title">📋 Revision Schedule</div><div id="revision-schedule"></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+<script src="app.js"></script>
+</body>
+</html>
