@@ -1,110 +1,208 @@
-// netlify/functions/ai.js
-// ============================================================
-// SECURE BACKEND PROXY — Groq API
-// API key lives ONLY here as a Netlify Environment Variable.
-// The browser never sees it.
-// ============================================================
+// ai.js — Netlify Serverless Function (secure Groq proxy)
+// Accessed at: /.netlify/functions/ai
+// GROQ_API_KEY must be set in Netlify → Environment Variables
+
+const https = require("https");
+
+function httpsPost(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname,
+      method: "POST",
+      headers: { ...headers, "Content-Length": Buffer.byteLength(body) }
+    };
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json"
+};
 
 exports.handler = async function (event) {
 
-  // CORS preflight
   if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
-        "Access-Control-Allow-Methods": "POST, OPTIONS"
-      },
-      body: ""
-    };
+    return { statusCode: 200, headers: CORS, body: "" };
   }
 
   if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "Method not allowed" })
-    };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
-  // Pull key from Netlify environment — NEVER from client
   const GROQ_API_KEY = process.env.GROQ_API_KEY;
   if (!GROQ_API_KEY) {
     return {
-      statusCode: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({
-        error: "Server misconfiguration: GROQ_API_KEY environment variable is not set. Go to Netlify → Site Configuration → Environment Variables and add it."
-      })
+      statusCode: 500, headers: CORS,
+      body: JSON.stringify({ error: "GROQ_API_KEY not set. Go to Netlify → Site Settings → Environment Variables → Add GROQ_API_KEY" })
     };
   }
 
-  let body;
+  let parsed;
   try {
-    body = JSON.parse(event.body);
+    parsed = JSON.parse(event.body || "{}");
   } catch (e) {
-    return {
-      statusCode: 400,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "Invalid request body" })
-    };
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "Invalid JSON body" }) };
   }
 
-  const { system, messages } = body;
-  if (!messages || !Array.isArray(messages)) {
-    return {
-      statusCode: 400,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "messages array is required" })
-    };
+  const { system, messages } = parsed;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "messages array required" }) };
   }
 
-  // Build OpenAI-compatible messages array for Groq
   const groqMessages = [
-    { role: "system", content: system || "You are a helpful AI tutor." },
+    { role: "system", content: system || "You are a helpful AI tutor for Indian students." },
     ...messages
   ];
 
+  const reqBody = JSON.stringify({
+    model: "llama-3.3-70b-versatile",
+    max_tokens: 1500,
+    temperature: 0.7,
+    messages: groqMessages
+  });
+
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + GROQ_API_KEY
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        max_tokens: 1500,
-        temperature: 0.7,
-        messages: groqMessages
-      })
-    });
+    const result = await httpsPost(
+      "https://api.groq.com/openai/v1/chat/completions",
+      { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_API_KEY },
+      reqBody
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ error: data?.error?.message || "Groq API error" })
-      };
+    let groqData;
+    try {
+      groqData = JSON.parse(result.body);
+    } catch (e) {
+      return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Bad response from Groq: " + result.body.slice(0, 300) }) };
     }
 
-    return {
-      statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ text: data.choices[0].message.content })
-    };
+    if (result.status !== 200) {
+      return { statusCode: result.status, headers: CORS, body: JSON.stringify({ error: groqData?.error?.message || "Groq error " + result.status }) };
+    }
+
+    const text = groqData?.choices?.[0]?.message?.content;
+    if (!text) {
+      return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Empty Groq response. Raw: " + result.body.slice(0, 300) }) };
+    }
+
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ text }) };
 
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "Proxy error: " + err.message })
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Network error: " + err.message }) };
+  }
+};
+// ai.js — Netlify Serverless Function (secure Groq proxy)
+// Accessed at: /.netlify/functions/ai
+// GROQ_API_KEY must be set in Netlify → Environment Variables
+
+const https = require("https");
+
+function httpsPost(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname,
+      method: "POST",
+      headers: { ...headers, "Content-Length": Buffer.byteLength(body) }
     };
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json"
+};
+
+exports.handler = async function (event) {
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: CORS, body: "" };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
+  }
+
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_API_KEY) {
+    return {
+      statusCode: 500, headers: CORS,
+      body: JSON.stringify({ error: "GROQ_API_KEY not set. Go to Netlify → Site Settings → Environment Variables → Add GROQ_API_KEY" })
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(event.body || "{}");
+  } catch (e) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "Invalid JSON body" }) };
+  }
+
+  const { system, messages } = parsed;
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "messages array required" }) };
+  }
+
+  const groqMessages = [
+    { role: "system", content: system || "You are a helpful AI tutor for Indian students." },
+    ...messages
+  ];
+
+  const reqBody = JSON.stringify({
+    model: "llama-3.3-70b-versatile",
+    max_tokens: 1500,
+    temperature: 0.7,
+    messages: groqMessages
+  });
+
+  try {
+    const result = await httpsPost(
+      "https://api.groq.com/openai/v1/chat/completions",
+      { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_API_KEY },
+      reqBody
+    );
+
+    let groqData;
+    try {
+      groqData = JSON.parse(result.body);
+    } catch (e) {
+      return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Bad response from Groq: " + result.body.slice(0, 300) }) };
+    }
+
+    if (result.status !== 200) {
+      return { statusCode: result.status, headers: CORS, body: JSON.stringify({ error: groqData?.error?.message || "Groq error " + result.status }) };
+    }
+
+    const text = groqData?.choices?.[0]?.message?.content;
+    if (!text) {
+      return { statusCode: 502, headers: CORS, body: JSON.stringify({ error: "Empty Groq response. Raw: " + result.body.slice(0, 300) }) };
+    }
+
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ text }) };
+
+  } catch (err) {
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: "Network error: " + err.message }) };
   }
 };
